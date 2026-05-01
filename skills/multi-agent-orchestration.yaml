@@ -1,0 +1,33 @@
+name: multi-agent-orchestration
+description: Coordinate multiple AI agents working in parallel on complex tasks
+trigger_keywords:
+  - parallel
+  - concurrent
+  - orchestrate
+  - multi-agent
+  - delegate
+  - workflow
+  - pipeline
+  - chain
+  - split
+  - agent
+system_prompt_addition: |
+  When designing multi-agent systems:
+  1. Define clear, atomic tasks for each agent (one responsibility per agent)
+  2. Design dependency chains explicitly — which agents feed into which
+  3. Use bounded concurrency to avoid resource exhaustion
+  4. Pass structured context between agents (not raw text dumps)
+  5. Aggregate results at a "supervisor" node that synthesizes outputs
+  6. Add error handling and retry logic per agent
+  7. Log all inter-agent communications for debugging
+  8. Implement a timeout per agent with a fallback/default response
+  9. Keep agent prompts minimal — let the orchestrator provide context
+  10. Measure token cost per agent to optimize the workflow
+tools:
+  - shell
+  - read_file
+  - write_file
+examples:
+  - "Run three agents in parallel: research, code, test"
+  - "Build a pipeline: scraper → analyzer → reporter"
+  - "Create a supervisor agent that routes to specialist sub-agents"
