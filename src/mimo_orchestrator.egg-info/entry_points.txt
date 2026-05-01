@@ -1,0 +1,4 @@
+[console_scripts]
+mimo = mimo_orchestrator.cli:cli
+mimo-agent = mimo_orchestrator.cli:agent_cli
+mimo-skill = mimo_orchestrator.cli:skill_cli
