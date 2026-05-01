@@ -1,0 +1,365 @@
+Metadata-Version: 2.4
+Name: mimo-orchestrator
+Version: 0.1.0
+Summary: Multi-agent workflow orchestrator powered by Xiaomi MiMo API — build, delegate, and chain AI agents with skills, tools, and persistent memory.
+Author-email: gcxsad <gcxsad@users.noreply.github.com>
+License: MIT
+Project-URL: Homepage, https://github.com/gcxsad/mimo-orchestrator
+Project-URL: Repository, https://github.com/gcxsad/mimo-orchestrator
+Project-URL: Documentation, https://github.com/gcxsad/mimo-orchestrator#readme
+Project-URL: Issues, https://github.com/gcxsad/mimo-orchestrator/issues
+Keywords: ai,agent,mimo,multi-agent,orchestration,xiaomi,llm,hermes
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests>=2.28.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: click>=8.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: tiktoken>=0.5.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Provides-Extra: all
+Requires-Dist: mimo-orchestrator[dev]; extra == "all"
+Dynamic: license-file
+
+# MiMo Orchestrator
+
+> Multi-agent workflow engine powered by **Xiaomi MiMo API** — orchestrate, delegate, and chain AI agents with skills, tools, and persistent memory.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-green.svg)](https://www.python.org/)
+[![Powered by Xiaomi MiMo](https://img.shields.io/badge/Powered%20by-Xiaomi%20MiMo-FF6B35?style=flat-square)](https://platform.xiaomimimo.com/)
+
+---
+
+## What is this?
+
+**MiMo Orchestrator** is a production-ready Python CLI tool and library that lets you:
+
+- **Run autonomous agents** powered by Xiaomi MiMo's large language models
+- **Orchestrate multiple agents in parallel** — each agent can be a specialized worker (researcher, coder, reviewer, tester)
+- **Chain tasks with dependencies** — the output of agent A becomes context for agent B
+- **Register custom tools** — give agents shell access, file I/O, web search, and more
+- **Load and execute skills** — reusable behaviour packs with trigger keywords and system prompt additions
+- **Stream responses** — real-time token-by-token output for interactive use
+
+Think of it as a lightweight, MiMo-native alternative to LangChain agents + CrewAI, purpose-built for the Xiaomi MiMo ecosystem.
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    MiMo Orchestrator                        │
+│                                                             │
+│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   │
+│  │   Agent A    │   │   Agent B    │   │   Agent C    │   │
+│  │  (research)  │   │  (coding)    │   │ (reviewing)  │   │
+│  └──────┬───────┘   └──────┬───────┘   └──────┬───────┘   │
+│         │                   │                   │            │
+│         └───────────────────┼───────────────────┘            │
+│                             │                                │
+│              ┌──────────────▼──────────────┐               │
+│              │      Tool Registry           │               │
+│              │  shell | file | web | search │               │
+│              └──────────────────────────────┘               │
+│                             │                                │
+│              ┌──────────────▼──────────────┐               │
+│              │      Skill Manager           │               │
+│              │  auto-detect + load skills   │               │
+│              └──────────────────────────────┘               │
+│                             │                                │
+│              ┌──────────────▼──────────────┐               │
+│              │      MiMo API Client        │               │
+│              │   https://api.xiaomimimo.com │               │
+│              └──────────────────────────────┘               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Quick Start
+
+### 1. Install
+
+```bash
+pip install -e .
+```
+
+Or from source:
+
+```bash
+git clone https://github.com/gcxsad/mimo-orchestrator.git
+cd mimo-orchestrator
+pip install -e .
+```
+
+### 2. Set your API key
+
+```bash
+export MIMO_API_KEY=your_mimo_api_key_here
+# Get a key at: https://platform.xiaomimimo.com/
+```
+
+### 3. Run your first agent
+
+```bash
+# Single task
+mimo agent "Write a Python function that checks if a string is a palindrome"
+
+# With verbose iteration output
+mimo agent "Build a FastAPI app with JWT auth" --verbose
+```
+
+### 4. Run parallel tasks
+
+```bash
+mimo parallel \
+  -t "Research the best Python web frameworks in 2025" \
+  -t "Write a sample FastAPI app with one endpoint" \
+  -t "Write unit tests for the FastAPI app"
+```
+
+### 5. Interactive shell
+
+```bash
+mimo shell
+# Then type your questions — agent responds with full tool access
+```
+
+---
+
+## Python API
+
+### Single Agent
+
+```python
+from mimo_orchestrator import Agent, MiMoClient, ToolRegistry
+
+mimo = MiMoClient(api_key="your_key")
+registry = ToolRegistry()
+agent = Agent(mimo_client=mimo, tool_registry=registry, max_iterations=20)
+
+result = agent.run(
+    "Write a CLI tool that renames all .txt files to .md in the current directory"
+)
+
+print(result.content)       # The agent's final answer
+print(result.success)       # True/False
+print(result.total_tokens)  # Token usage
+```
+
+### Parallel Orchestration
+
+```python
+from mimo_orchestrator import Orchestrator, SubTask
+
+orch = Orchestrator(max_workers=3)
+
+tasks = [
+    SubTask(id="research", description="Research REST API best practices"),
+    SubTask(id="implement", description="Write a Python REST API using FastAPI", dependencies=["research"]),
+    SubTask(id="test", description="Write pytest tests for the API", dependencies=["implement"]),
+    SubTask(id="deploy", description="Write a Dockerfile for the API", dependencies=["implement"]),
+]
+
+result = orch.run_parallel(tasks)
+orch.print_summary(result)
+```
+
+### Custom Tools
+
+```python
+from mimo_orchestrator import ToolRegistry
+
+registry = ToolRegistry()
+
+def my_custom_tool(query: str) -> str:
+    """Search your internal knowledge base."""
+    return f"Found docs for: {query}"
+
+registry.register(
+    name="kb_search",
+    handler=my_custom_tool,
+    description="Search the internal knowledge base for documentation",
+    parameters={
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Search query"}
+        },
+        "required": ["query"]
+    },
+    category="knowledge",
+)
+
+agent = Agent(tool_registry=registry)
+result = agent.run("Find docs about our authentication system using kb_search")
+```
+
+### Skills
+
+Create `skills/web-server.yaml`:
+
+```yaml
+name: web-server
+description: Build production-ready web servers and REST APIs
+trigger_keywords:
+  - api
+  - http
+  - server
+  - rest
+  - endpoint
+  - fastapi
+  - flask
+  - django
+system_prompt_addition: |
+  When building web servers:
+  - Always use type hints and Pydantic models for request/response validation
+  - Include health check endpoints (/health, /ready)
+  - Add structured logging with request IDs
+  - Include graceful shutdown handlers
+  - Write unit tests with pytest
+tools:
+  - shell
+  - read_file
+  - write_file
+```
+
+```python
+from mimo_orchestrator import SkillManager
+
+sm = SkillManager(skills_dir="./skills")
+sm.load_all()
+
+# Auto-detect relevant skills
+relevant = sm.find_relevant("Build a REST API with JWT authentication")
+print(relevant)  # [Skill(name='web-server', ...)]
+```
+
+---
+
+## CLI Reference
+
+| Command | Description |
+|---------|-------------|
+| `mimo agent "task"` | Run a single agent on a task |
+| `mimo parallel -t A -t B` | Run multiple tasks in parallel |
+| `mimo shell` | Interactive chat shell |
+| `mimo skill list` | List all loaded skills |
+| `mimo skill info <name>` | Show skill details |
+| `mimo tools` | List all registered tools |
+
+**Options:**
+- `--verbose` — show iteration details, tool calls, and latency
+- `--model` — override the default MiMo model
+- `--temperature` — sampling temperature (0.0–2.0)
+- `--max-iter` — max agent iterations (default: 30)
+- `--workers` — max parallel workers for `parallel` (default: 3)
+
+---
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MIMO_API_KEY` | — | **Required.** Xiaomi MiMo API key |
+| `MIMO_BASE_URL` | `https://api.xiaomimimo.com/v1` | API base URL |
+| `MIMO_MODEL` | `MiMo-Text-24B` | Default model |
+| `AGENT_MAX_ITERATIONS` | `50` | Max iterations per agent |
+| `AGENT_TIMEOUT` | `120` | Timeout per iteration (seconds) |
+| `LOG_LEVEL` | `INFO` | Logging level |
+
+---
+
+## Available Models
+
+MiMo Orchestrator supports all Xiaomi MiMo models:
+
+- `MiMo-Text-24B` — flagship text model (default)
+- `MiMo-Max` — maximum capability variant
+- `MiMo-Reasoning` — chain-of-thought reasoning
+- `MiMo-Vision-72B` — multi-modal (vision + text)
+
+---
+
+## Built-in Tools
+
+Agents have these tools available by default:
+
+| Tool | Category | Description |
+|------|----------|-------------|
+| `shell` | system | Execute shell commands |
+| `read_file` | file | Read a file with line offsets |
+| `write_file` | file | Write content to a file |
+| `search_code` | file | Grep/search inside files |
+| `list_directory` | file | List directory contents |
+| `make_directory` | file | Create directories |
+| `search_web` | web | Web search via DuckDuckGo |
+
+---
+
+## Project Structure
+
+```
+mimo-orchestrator/
+├── src/mimo_orchestrator/
+│   ├── __init__.py          # Package entry point
+│   ├── client.py            # MiMo API client
+│   ├── agent.py             # Core Agent class
+│   ├── orchestrator.py      # Multi-agent orchestration
+│   ├── skill_manager.py     # Skill loading & management
+│   ├── tool_registry.py     # Tool registration & execution
+│   └── cli.py               # CLI entry points
+├── skills/                  # Skill packs (YAML)
+│   ├── web-server.yaml
+│   └── data-analysis.yaml
+├── examples/
+│   └── quickstart.py
+├── pyproject.toml
+├── README.md
+└── .env.example
+```
+
+---
+
+## Development
+
+```bash
+# Install with dev dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Lint
+ruff check src/
+
+# Format
+black src/
+```
+
+---
+
+## Contributing
+
+Contributions welcome! Open an issue or PR at [github.com/gcxsad/mimo-orchestrator](https://github.com/gcxsad/mimo-orchestrator).
+
+---
+
+## License
+
+MIT © gcxsad
