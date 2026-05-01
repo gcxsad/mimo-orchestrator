@@ -1,0 +1,36 @@
+name: web-server
+description: Build production-ready web servers and REST APIs with Python
+trigger_keywords:
+  - api
+  - http
+  - server
+  - rest
+  - endpoint
+  - fastapi
+  - flask
+  - django
+  - route
+  - request
+  - response
+  - json
+system_prompt_addition: |
+  When building web servers and REST APIs, follow these principles:
+  1. Use FastAPI or Starlette for async Python APIs
+  2. Always validate request/response data with Pydantic models
+  3. Include health check endpoints: GET /health → {"status": "ok"}
+  4. Add structured logging with request IDs (use middleware)
+  5. Implement graceful shutdown with signal handlers
+  6. Write async handlers where possible for performance
+  7. Include OpenAPI/Swagger docs auto-generation
+  8. Use dependency injection for shared resources (DB, auth)
+  9. Handle CORS, rate limiting, and error responses consistently
+  10. Write unit tests with pytest + httpx AsyncClient
+tools:
+  - shell
+  - read_file
+  - write_file
+  - make_directory
+examples:
+  - "Build a REST API with FastAPI"
+  - "Create a web server that handles POST /users"
+  - "Write a FastAPI app with JWT authentication"
