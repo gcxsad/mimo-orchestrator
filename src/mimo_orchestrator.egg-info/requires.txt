@@ -1,0 +1,15 @@
+requests>=2.28.0
+rich>=13.0.0
+click>=8.0.0
+pydantic>=2.0.0
+tiktoken>=0.5.0
+
+[all]
+mimo-orchestrator[dev]
+
+[dev]
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+ruff>=0.1.0
+mypy>=1.0.0
